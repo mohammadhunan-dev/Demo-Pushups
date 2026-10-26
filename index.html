@@ -4,14 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Demo Pushups</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
   <style>
     :root {
       --bg: #f5f5f7;
       --card: #ffffff;
       --text: #1d1d1f;
       --muted: #6e6e73;
+      --border: #e5e5ea;
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
+      --up: #16a34a;
+      --down: #dc2626;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -20,8 +24,11 @@
         --card: #1c1c1f;
         --text: #f5f5f7;
         --muted: #a1a1a6;
+        --border: #2c2c30;
         --accent: #3b82f6;
         --accent-hover: #60a5fa;
+        --up: #4ade80;
+        --down: #f87171;
       }
     }
 
@@ -30,89 +37,423 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
+      padding: 24px 16px;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
 
+    main {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    main, .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .card {
       background: var(--card);
       border-radius: 20px;
-      padding: 40px 32px;
-      text-align: center;
+      padding: 24px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 320px;
+    }
+
+    [hidden] { display: none !important; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    header span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     h1 {
       margin: 0 0 8px;
       font-size: 1.25rem;
       font-weight: 600;
-      color: var(--muted);
     }
 
-    #count {
-      font-size: 5rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      margin: 8px 0 24px;
-    }
+    p { margin: 0 0 16px; color: var(--muted); }
 
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
+    input {
+      width: 100%;
+      font: inherit;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text);
     }
 
     button {
-      width: 72px;
-      height: 72px;
+      font: inherit;
       border: none;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 2rem;
       cursor: pointer;
+      color: #fff;
+      background: var(--accent);
       transition: background 0.15s, transform 0.1s;
     }
 
     button:hover { background: var(--accent-hover); }
-    button:active { transform: scale(0.94); }
-    button:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 3px; }
+    button:active { transform: scale(0.96); }
+    button:disabled { opacity: 0.4; cursor: default; transform: none; }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 2px; }
+
+    .text-button {
+      background: none;
+      color: var(--accent);
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .text-button:hover { background: none; text-decoration: underline; }
+
+    .wide-button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .counter-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .round-button {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      font-size: 2rem;
+    }
+
+    #today-count {
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .custom {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .custom button {
+      padding: 0 20px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    #save-status {
+      min-height: 1.25em;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    #save-status.error { color: var(--down); }
+
+    .stats {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stat {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .stat-title { font-weight: 600; color: var(--muted); }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-delta { font-weight: 600; margin-top: 4px; }
+    .stat-delta.up { color: var(--up); }
+    .stat-delta.down { color: var(--down); }
+    .stat-delta.flat { color: var(--muted); }
+
+    .stat-detail {
+      margin-top: 2px;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    #auth-message.error { color: var(--down); }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>Pushups</h1>
-    <div class="buttons">
-      <button id="increment" aria-label="Increment">&#8593;</button>
-      <div id="count" aria-live="polite">0</div>
-      <button id="decrement" aria-label="Decrement">&#8595;</button>
+  <main>
+    <section id="signed-out" class="card" hidden>
+      <h1>Pushups</h1>
+      <p>Sign in with your email to track your pushups across devices.</p>
+      <form id="sign-in-form">
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <button class="wide-button" type="submit">Email me a sign-in link</button>
+      </form>
+      <p id="auth-message" role="status" style="margin: 12px 0 0;"></p>
+    </section>
+
+    <div id="signed-in" class="stack" hidden>
+        <header>
+          <span id="user-email"></span>
+          <button id="sign-out" class="text-button" type="button">Sign out</button>
+        </header>
+
+        <section class="card counter">
+          <div class="counter-label">Today</div>
+          <button id="increment" class="round-button" type="button" aria-label="Add one pushup">&#8593;</button>
+          <div id="today-count" aria-live="polite">0</div>
+          <button id="decrement" class="round-button" type="button" aria-label="Remove one pushup">&#8595;</button>
+          <form id="custom-form" class="custom">
+            <input id="custom-amount" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="Add a set, e.g. 25" aria-label="Number of pushups to add">
+            <button type="submit">Add</button>
+          </form>
+          <div id="save-status" role="status"></div>
+        </section>
+
+        <section class="stats">
+          <div class="stat">
+            <div class="stat-top"><span class="stat-title">Today</span><span id="stat-today" class="stat-value">0</span></div>
+            <div id="delta-today" class="stat-delta flat"></div>
+            <div id="detail-today" class="stat-detail"></div>
+          </div>
+          <div class="stat">
+            <div class="stat-top"><span class="stat-title">This week</span><span id="stat-week" class="stat-value">0</span></div>
+            <div id="delta-week" class="stat-delta flat"></div>
+            <div id="detail-week" class="stat-detail"></div>
+          </div>
+          <div class="stat">
+            <div class="stat-top"><span class="stat-title">This month</span><span id="stat-month" class="stat-value">0</span></div>
+            <div id="delta-month" class="stat-delta flat"></div>
+            <div id="detail-month" class="stat-detail"></div>
+          </div>
+        </section>
     </div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js"></script>
   <script>
-    const countEl = document.getElementById('count');
-    let count = 0;
+    // The publishable key is meant to be public; row-level security in the database protects the data.
+    const SUPABASE_URL = 'https://uazlqmawtlzhatcktpcx.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_up4QXFYLTv-yf3YAofrD6g_UegJriFT';
+    const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    function render() {
-      countEl.textContent = count;
-    }
+    // Rapid taps are batched into one row, sent after this much idle time.
+    const BATCH_DELAY_MS = 1500;
+    const RETRY_DELAY_MS = 5000;
+    const MAX_ENTRY = 1000;
 
-    document.getElementById('increment').addEventListener('click', () => {
-      count++;
-      render();
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const $ = (id) => document.getElementById(id);
+
+    let stats = null;
+    let pending = 0;   // taps not yet sent to the database
+    let inFlight = 0;  // amount currently being saved
+    let flushTimer = null;
+
+    // ---- Auth ----
+
+    $('sign-in-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = $('auth-message');
+      const button = event.submitter;
+      button.disabled = true;
+      message.className = '';
+      message.textContent = 'Sending…';
+
+      const { error } = await db.auth.signInWithOtp({
+        email: $('email').value.trim(),
+        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+      });
+
+      button.disabled = false;
+      if (error) {
+        message.className = 'error';
+        message.textContent = error.message;
+      } else {
+        message.textContent = 'Check your email for a sign-in link.';
+      }
     });
 
-    document.getElementById('decrement').addEventListener('click', () => {
-      count--;
+    $('sign-out').addEventListener('click', async () => {
+      await flush();
+      await db.auth.signOut();
+    });
+
+    let currentUserId = null;
+    db.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
+      $('signed-out').hidden = !!user;
+      $('signed-in').hidden = !user;
+      if (!user) {
+        currentUserId = null;
+        stats = null;
+        return;
+      }
+      $('user-email').textContent = user.email ?? '';
+      if (user.id !== currentUserId) {
+        currentUserId = user.id;
+        // Defer: calling Supabase inside this callback can deadlock the auth client.
+        setTimeout(loadStats, 0);
+      }
+    });
+
+    // ---- Stats ----
+
+    async function loadStats() {
+      const { data, error } = await db.rpc('get_stats', { tz: TIME_ZONE });
+      if (error) {
+        setStatus('Could not load stats: ' + error.message, true);
+        return;
+      }
+      stats = data;
       render();
+    }
+
+    // Unsaved taps are shown immediately on top of the last loaded totals.
+    function render() {
+      if (!stats) return;
+      const unsaved = pending + inFlight;
+      const today = stats.today + unsaved;
+      const week = stats.week + unsaved;
+      const month = stats.month + unsaved;
+
+      $('today-count').textContent = today;
+      $('decrement').disabled = today <= 0;
+
+      renderStat('today', today, stats.yesterday_to_date, 'vs yesterday at this time',
+        `Yesterday: ${stats.yesterday_total} · 30-day avg: ${stats.daily_avg_30d}/day`);
+      renderStat('week', week, stats.last_week_to_date, 'vs last week so far',
+        `Last week total: ${stats.last_week_total}`);
+      renderStat('month', month, stats.last_month_to_date, 'vs last month so far',
+        `Last month total: ${stats.last_month_total}`);
+    }
+
+    function renderStat(key, current, previous, label, detail) {
+      $('stat-' + key).textContent = current;
+      $('detail-' + key).textContent = detail;
+
+      const diff = current - previous;
+      const delta = $('delta-' + key);
+      if (diff === 0) {
+        delta.className = 'stat-delta flat';
+        delta.textContent = `— same ${label.replace(/^vs /, 'as ')}`;
+        return;
+      }
+      const arrow = diff > 0 ? '▲' : '▼';
+      const sign = diff > 0 ? '+' : '−';
+      const pct = previous > 0 ? `${Math.round(Math.abs(diff) / previous * 100)}%` : 'new';
+      delta.className = 'stat-delta ' + (diff > 0 ? 'up' : 'down');
+      delta.textContent = `${arrow} ${sign}${Math.abs(diff)} (${pct}) ${label}`;
+    }
+
+    // ---- Logging ----
+
+    function setStatus(text, isError = false) {
+      $('save-status').textContent = text;
+      $('save-status').className = isError ? 'error' : '';
+    }
+
+    function add(amount) {
+      if (!stats) return;
+      // Never let today's total go below zero.
+      const today = stats.today + pending + inFlight;
+      amount = Math.max(amount, -today);
+      if (amount === 0) return;
+
+      pending += amount;
+      render();
+      setStatus('Saving…');
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(flush, Math.abs(pending) >= MAX_ENTRY ? 0 : BATCH_DELAY_MS);
+    }
+
+    async function flush() {
+      clearTimeout(flushTimer);
+      if (pending === 0 || inFlight !== 0) return;
+
+      const amount = Math.max(-MAX_ENTRY, Math.min(MAX_ENTRY, pending));
+      pending -= amount;
+      inFlight = amount;
+
+      const { error } = await db.from('pushup_entries').insert({ count: amount });
+      inFlight = 0;
+
+      if (error) {
+        // Put it back and try again later, so taps aren't lost on a flaky connection.
+        pending += amount;
+        setStatus('Not saved yet — retrying…', true);
+        flushTimer = setTimeout(flush, RETRY_DELAY_MS);
+        return;
+      }
+
+      if (pending !== 0) {
+        flushTimer = setTimeout(flush, BATCH_DELAY_MS);
+        return;
+      }
+      setStatus('Saved');
+      await loadStats();
+    }
+
+    $('increment').addEventListener('click', () => add(1));
+    $('decrement').addEventListener('click', () => add(-1));
+
+    $('custom-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const input = $('custom-amount');
+      const amount = Number(input.value);
+      if (!Number.isInteger(amount) || amount < 1 || amount > MAX_ENTRY) {
+        setStatus(`Enter a whole number from 1 to ${MAX_ENTRY}.`, true);
+        return;
+      }
+      input.value = '';
+      add(amount);
+      flush();
+    });
+
+    // Save before the tab is hidden; refresh totals when it comes back (e.g. the next day).
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flush();
+      } else if (currentUserId && pending === 0 && inFlight === 0) {
+        loadStats();
+      }
     });
   </script>
 </body>
