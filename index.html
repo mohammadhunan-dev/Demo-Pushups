@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Pushups</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111113;
+        --card: #1c1c1f;
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 320px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    #count {
+      font-size: 5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin: 8px 0 24px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      width: 72px;
+      height: 72px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: scale(0.94); }
+    button:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Pushups</h1>
+    <div class="buttons">
+      <button id="increment" aria-label="Increment">&#8593;</button>
+      <div id="count" aria-live="polite">0</div>
+      <button id="decrement" aria-label="Decrement">&#8595;</button>
+    </div>
+  </main>
+
+  <script>
+    const countEl = document.getElementById('count');
+    let count = 0;
+
+    function render() {
+      countEl.textContent = count;
+    }
+
+    document.getElementById('increment').addEventListener('click', () => {
+      count++;
+      render();
+    });
+
+    document.getElementById('decrement').addEventListener('click', () => {
+      count--;
+      render();
+    });
+  </script>
+</body>
+</html>
