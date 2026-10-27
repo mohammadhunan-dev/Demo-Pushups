@@ -32,18 +32,24 @@
 
     <div id="signin-form-state">
       <h1 class="large-title">Pushups</h1>
-      <p class="subhead">Track every set and see how today compares.</p>
+      <p id="signin-subhead" class="subhead">Track every set and see how today compares.</p>
       <form id="signin-form" novalidate>
-        <input id="email" class="text-field" type="email" placeholder="Email" autocomplete="email" aria-label="Email" required>
+        <div class="field-group">
+          <input id="email" type="email" placeholder="Email" autocomplete="username" aria-label="Email" required>
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password" required>
+        </div>
+        <div id="password-hint" class="field-hint" hidden>Use at least 8 characters.</div>
         <div id="signin-error" class="field-error" role="alert"></div>
-        <button id="signin-submit" class="btn-prominent" type="submit">Continue</button>
+        <button id="signin-submit" class="btn-prominent" type="submit">Sign In</button>
       </form>
+      <button id="mode-toggle" class="btn-plain" type="button">Create Account</button>
+      <button id="magic-link" class="btn-plain" type="button">Email Me a Sign-In Link</button>
     </div>
 
     <div id="signin-sent-state" hidden>
       <h1 class="large-title">Check Your Email</h1>
-      <p class="subhead">Tap the link sent to <strong id="sent-email"></strong> to sign in.</p>
-      <button id="signin-reset" class="btn-plain" type="button">Use a Different Email</button>
+      <p id="sent-message" class="subhead"></p>
+      <button id="signin-reset" class="btn-plain" type="button">Back to Sign In</button>
     </div>
   </main>
 

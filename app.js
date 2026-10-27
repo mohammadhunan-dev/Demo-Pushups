@@ -71,39 +71,127 @@ window.addEventListener('hashchange', route);
 
 // ---- Auth ----
 
-$('signin-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
+const MIN_PASSWORD_LENGTH = 8;
+const REDIRECT_URL = window.location.origin + window.location.pathname;
+let authMode = 'signin';  // or 'signup'
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const signup = mode === 'signup';
+  $('signin-subhead').textContent = signup
+    ? 'Create an account with your email and a password.'
+    : 'Track every set and see how today compares.';
+  $('signin-submit').textContent = signup ? 'Create Account' : 'Sign In';
+  $('mode-toggle').textContent = signup ? 'I Already Have an Account' : 'Create Account';
+  $('password').autocomplete = signup ? 'new-password' : 'current-password';
+  $('password-hint').hidden = !signup;
+  $('magic-link').hidden = signup;
+  $('signin-error').textContent = '';
+}
+
+function authErrorMessage(error) {
+  switch (error.code) {
+    case 'invalid_credentials': return 'Incorrect email or password.';
+    case 'email_not_confirmed': return 'Confirm your email using the link in your inbox, then sign in.';
+    case 'user_already_exists': return 'An account with this email already exists. Sign in instead.';
+    case 'over_email_send_rate_limit': return 'Too many emails sent recently. Try again later, or sign in with a password.';
+    default: return error.status === 429 ? 'Too many attempts. Wait a minute and try again.' : error.message;
+  }
+}
+
+function validEmail() {
   const email = $('email').value.trim();
-  const error = $('signin-error');
-  const button = $('signin-submit');
+  if (/^\S+@\S+\.\S+$/.test(email)) return email;
+  $('signin-error').textContent = 'Enter an email address, like name@example.com.';
+  $('email').focus();
+  return null;
+}
 
-  if (!/^\S+@\S+\.\S+$/.test(email)) {
-    error.textContent = 'Enter an email address, like name@example.com.';
-    return;
-  }
-
-  error.textContent = '';
+async function withBusy(button, busyLabel, task) {
+  const label = button.textContent;
   button.disabled = true;
-  button.textContent = 'Sending…';
-  const { error: sendError } = await db.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname },
-  });
-  button.disabled = false;
-  button.textContent = 'Continue';
-
-  if (sendError) {
-    error.textContent = sendError.message;
-    return;
+  button.textContent = busyLabel;
+  try {
+    return await task();
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
   }
-  $('sent-email').textContent = email;
+}
+
+function showEmailSent(email, purpose) {
+  const message = $('sent-message');
+  message.replaceChildren(
+    'Tap the link sent to ', h('strong', '', email),
+    purpose === 'confirm' ? ' to confirm your account, then sign in.' : ' to sign in.',
+  );
   $('signin-form-state').hidden = true;
   $('signin-sent-state').hidden = false;
+}
+
+$('signin-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const error = $('signin-error');
+  error.textContent = '';
+  const email = validEmail();
+  if (!email) return;
+
+  const password = $('password').value;
+  if (!password) {
+    error.textContent = 'Enter your password.';
+    $('password').focus();
+    return;
+  }
+  if (authMode === 'signup' && password.length < MIN_PASSWORD_LENGTH) {
+    error.textContent = `Choose a password with at least ${MIN_PASSWORD_LENGTH} characters.`;
+    $('password').focus();
+    return;
+  }
+
+  if (authMode === 'signin') {
+    const { error: signInError } = await withBusy($('signin-submit'), 'Signing In…',
+      () => db.auth.signInWithPassword({ email, password }));
+    if (signInError) error.textContent = authErrorMessage(signInError);
+    else $('password').value = '';
+    return;
+  }
+
+  const { data, error: signUpError } = await withBusy($('signin-submit'), 'Creating Account…',
+    () => db.auth.signUp({ email, password, options: { emailRedirectTo: REDIRECT_URL } }));
+  if (signUpError) {
+    error.textContent = authErrorMessage(signUpError);
+    return;
+  }
+  $('password').value = '';
+  if (data.session) return;  // email confirmation is off; already signed in
+  // With confirmation on, Supabase hides whether an address is taken by returning a user with no identities.
+  if (data.user && data.user.identities?.length === 0) {
+    setAuthMode('signin');
+    error.textContent = authErrorMessage({ code: 'user_already_exists' });
+    return;
+  }
+  showEmailSent(email, 'confirm');
+});
+
+$('mode-toggle').addEventListener('click', () => {
+  setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+  $('email').focus();
+});
+
+$('magic-link').addEventListener('click', async () => {
+  $('signin-error').textContent = '';
+  const email = validEmail();
+  if (!email) return;
+  const { error } = await withBusy($('magic-link'), 'Sending…',
+    () => db.auth.signInWithOtp({ email, options: { emailRedirectTo: REDIRECT_URL } }));
+  if (error) $('signin-error').textContent = authErrorMessage(error);
+  else showEmailSent(email, 'link');
 });
 
 $('signin-reset').addEventListener('click', () => {
   $('signin-sent-state').hidden = true;
   $('signin-form-state').hidden = false;
+  setAuthMode('signin');
   $('email').focus();
 });
 

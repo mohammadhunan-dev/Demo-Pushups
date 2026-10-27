@@ -590,28 +590,40 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   color: var(--label-2);
 }
 
-.text-field {
+/* Inset grouped fields, like Settings: one rounded group, hairline between rows. */
+.field-group {
+  background: var(--bg-cell);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.field-group input {
+  display: block;
   width: 100%;
   min-height: 50px;
   padding: 0 16px;
   border: none;
-  border-radius: 12px;
-  background: var(--bg-cell);
+  background: none;
   font-size: 17px;
 }
 
-.text-field::placeholder { color: var(--label-3); }
+.field-group input + input { border-top: 0.5px solid var(--separator); }
+.field-group input::placeholder { color: var(--label-3); }
+.field-group input:focus-visible { outline: 2px solid var(--tint); outline-offset: -2px; }
 
 .signin .btn-prominent { width: 100%; margin-top: 16px; min-height: 50px; border-radius: 14px; }
 
+.field-hint,
 .field-error {
-  min-height: 18px;
   margin-top: 8px;
+  padding: 0 16px;
   font-size: 13px;
   line-height: 18px;
-  color: var(--red);
   text-align: left;
 }
+
+.field-hint { color: var(--label-2); }
+.field-error { min-height: 18px; color: var(--red); }
 
 .btn-plain {
   min-height: 44px;
@@ -619,6 +631,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   color: var(--tint);
   font-size: 17px;
 }
+
+.signin .btn-plain { display: block; margin-left: auto; margin-right: auto; }
+.btn-plain + .btn-plain { margin-top: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .screen.entering, .screen.entering-back { animation: fade-in 0.2s linear; }
