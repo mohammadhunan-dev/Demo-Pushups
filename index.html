@@ -2,459 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo Pushups</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pushups">
+  <title>Pushups</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
-  <style>
-    :root {
-      --bg: #f5f5f7;
-      --card: #ffffff;
-      --text: #1d1d1f;
-      --muted: #6e6e73;
-      --border: #e5e5ea;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --up: #16a34a;
-      --down: #dc2626;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111113;
-        --card: #1c1c1f;
-        --text: #f5f5f7;
-        --muted: #a1a1a6;
-        --border: #2c2c30;
-        --accent: #3b82f6;
-        --accent-hover: #60a5fa;
-        --up: #4ade80;
-        --down: #f87171;
-      }
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 24px 16px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    }
-
-    main {
-      width: 100%;
-      max-width: 420px;
-      margin: 0 auto;
-    }
-
-    main, .stack {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    }
-
-    [hidden] { display: none !important; }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.875rem;
-      color: var(--muted);
-    }
-
-    header span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-
-    p { margin: 0 0 16px; color: var(--muted); }
-
-    input {
-      width: 100%;
-      font: inherit;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    button {
-      font: inherit;
-      border: none;
-      cursor: pointer;
-      color: #fff;
-      background: var(--accent);
-      transition: background 0.15s, transform 0.1s;
-    }
-
-    button:hover { background: var(--accent-hover); }
-    button:active { transform: scale(0.96); }
-    button:disabled { opacity: 0.4; cursor: default; transform: none; }
-    button:focus-visible, input:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 2px; }
-
-    .text-button {
-      background: none;
-      color: var(--accent);
-      padding: 4px;
-      flex-shrink: 0;
-    }
-
-    .text-button:hover { background: none; text-decoration: underline; }
-
-    .wide-button {
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-
-    .counter {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      text-align: center;
-    }
-
-    .counter-label {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .round-button {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      font-size: 2rem;
-    }
-
-    #today-count {
-      font-size: 5rem;
-      font-weight: 700;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .custom {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-      margin-top: 8px;
-    }
-
-    .custom button {
-      padding: 0 20px;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-
-    #save-status {
-      min-height: 1.25em;
-      font-size: 0.8125rem;
-      color: var(--muted);
-    }
-
-    #save-status.error { color: var(--down); }
-
-    .stats {
-      display: grid;
-      gap: 12px;
-    }
-
-    .stat {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px 20px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    }
-
-    .stat-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-
-    .stat-title { font-weight: 600; color: var(--muted); }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stat-delta { font-weight: 600; margin-top: 4px; }
-    .stat-delta.up { color: var(--up); }
-    .stat-delta.down { color: var(--down); }
-    .stat-delta.flat { color: var(--muted); }
-
-    .stat-detail {
-      margin-top: 2px;
-      font-size: 0.8125rem;
-      color: var(--muted);
-    }
-
-    #auth-message.error { color: var(--down); }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
-    <section id="signed-out" class="card" hidden>
-      <h1>Pushups</h1>
-      <p>Sign in with your email to track your pushups across devices.</p>
-      <form id="sign-in-form">
-        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
-        <button class="wide-button" type="submit">Email me a sign-in link</button>
+  <!-- One stroke-icon family throughout (Lucide-style, 2px). -->
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+      </symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Sign in -->
+  <main id="view-signin" class="screen signin" hidden>
+    <div class="app-glyph" aria-hidden="true"><svg class="icon"><use href="#i-flame"/></svg></div>
+
+    <div id="signin-form-state">
+      <h1 class="large-title">Pushups</h1>
+      <p class="subhead">Track every set and see how today compares.</p>
+      <form id="signin-form" novalidate>
+        <input id="email" class="text-field" type="email" placeholder="Email" autocomplete="email" aria-label="Email" required>
+        <div id="signin-error" class="field-error" role="alert"></div>
+        <button id="signin-submit" class="btn-prominent" type="submit">Continue</button>
       </form>
-      <p id="auth-message" role="status" style="margin: 12px 0 0;"></p>
-    </section>
+    </div>
 
-    <div id="signed-in" class="stack" hidden>
-        <header>
-          <span id="user-email"></span>
-          <button id="sign-out" class="text-button" type="button">Sign out</button>
-        </header>
-
-        <section class="card counter">
-          <div class="counter-label">Today</div>
-          <button id="increment" class="round-button" type="button" aria-label="Add one pushup">&#8593;</button>
-          <div id="today-count" aria-live="polite">0</div>
-          <button id="decrement" class="round-button" type="button" aria-label="Remove one pushup">&#8595;</button>
-          <form id="custom-form" class="custom">
-            <input id="custom-amount" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="Add a set, e.g. 25" aria-label="Number of pushups to add">
-            <button type="submit">Add</button>
-          </form>
-          <div id="save-status" role="status"></div>
-        </section>
-
-        <section class="stats">
-          <div class="stat">
-            <div class="stat-top"><span class="stat-title">Today</span><span id="stat-today" class="stat-value">0</span></div>
-            <div id="delta-today" class="stat-delta flat"></div>
-            <div id="detail-today" class="stat-detail"></div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span class="stat-title">This week</span><span id="stat-week" class="stat-value">0</span></div>
-            <div id="delta-week" class="stat-delta flat"></div>
-            <div id="detail-week" class="stat-detail"></div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span class="stat-title">This month</span><span id="stat-month" class="stat-value">0</span></div>
-            <div id="delta-month" class="stat-delta flat"></div>
-            <div id="detail-month" class="stat-detail"></div>
-          </div>
-        </section>
+    <div id="signin-sent-state" hidden>
+      <h1 class="large-title">Check Your Email</h1>
+      <p class="subhead">Tap the link sent to <strong id="sent-email"></strong> to sign in.</p>
+      <button id="signin-reset" class="btn-plain" type="button">Use a Different Email</button>
     </div>
   </main>
 
+  <!-- Summary -->
+  <main id="view-summary" class="screen" hidden>
+    <div class="large-title-bar">
+      <h1 class="large-title">Summary</h1>
+      <button id="avatar" class="avatar glass" type="button" aria-label="Account"></button>
+    </div>
+
+    <a href="#/pushups" class="card pressable" aria-label="Pushups today, show chart">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-flame"/></svg>
+        <span>Pushups</span>
+        <span class="meta"><span id="last-logged"></span><svg class="icon chevron"><use href="#i-chevron-right"/></svg></span>
+      </div>
+      <div class="big-value"><span id="today-count" class="rounded-num" aria-live="polite">0</span><span class="unit">reps</span></div>
+    </a>
+
+    <h2 class="section-title">Highlights</h2>
+    <div id="highlights"></div>
+  </main>
+
+  <!-- Pushups detail -->
+  <main id="view-detail" class="screen" hidden>
+    <nav class="nav-bar">
+      <a href="#/" class="nav-button leading glass" aria-label="Back to Summary"><svg class="icon"><use href="#i-chevron-left"/></svg>Summary</a>
+      <span class="title">Pushups</span>
+      <button class="nav-button trailing glass" type="button" data-open-add>Add Data</button>
+    </nav>
+
+    <div class="segmented" role="group" aria-label="Time range">
+      <button type="button" data-period="D" aria-pressed="false">D</button>
+      <button type="button" data-period="W" aria-pressed="true">W</button>
+      <button type="button" data-period="M" aria-pressed="false">M</button>
+      <button type="button" data-period="Y" aria-pressed="false">Y</button>
+    </div>
+
+    <section class="card chart-card">
+      <div id="chart-caption" class="chart-caption">Daily Average</div>
+      <div class="chart-value"><span id="chart-value" class="rounded-num" aria-live="polite">0</span><span class="unit">reps</span></div>
+      <div id="chart-range" class="chart-range"></div>
+      <div id="chart" class="chart" role="img"></div>
+      <div class="pager">
+        <button id="page-prev" type="button" aria-label="Previous period"><svg class="icon"><use href="#i-chevron-left"/></svg>Earlier</button>
+        <button id="page-next" type="button" aria-label="Next period">Later<svg class="icon"><use href="#i-chevron-right"/></svg></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating controls (signed in only) -->
+  <div id="chrome" hidden>
+    <div class="scroll-edge top"></div>
+    <div class="scroll-edge bottom"></div>
+    <div id="save-status" class="save-status glass fade" role="status"></div>
+    <div class="toolbar glass">
+      <button id="decrement" class="circle" type="button" aria-label="Remove one pushup"><svg class="icon"><use href="#i-arrow-down"/></svg></button>
+      <button class="btn-prominent" type="button" data-open-add><svg class="icon"><use href="#i-plus"/></svg>Add</button>
+      <button id="increment" class="circle" type="button" aria-label="Add one pushup"><svg class="icon"><use href="#i-arrow-up"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Add Data sheet -->
+  <div id="sheet-add" hidden>
+    <div class="scrim" data-close-sheet></div>
+    <form id="add-form" class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" novalidate>
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-bar">
+        <button class="leading" type="button" data-close-sheet>Cancel</button>
+        <span id="add-title" class="title">Pushups</span>
+        <button class="trailing" type="submit">Add</button>
+      </div>
+      <div class="group">
+        <label class="row">
+          <span>Reps</span>
+          <input id="add-amount" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="0">
+        </label>
+      </div>
+      <div id="add-error" class="row-note" role="alert">Logged at the current time.</div>
+    </form>
+  </div>
+
+  <!-- Account sheet -->
+  <div id="sheet-account" hidden>
+    <div class="scrim" data-close-sheet></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="account-title">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-bar">
+        <span></span>
+        <span id="account-title" class="title">Account</span>
+        <button class="trailing" type="button" data-close-sheet>Done</button>
+      </div>
+      <div id="account-email" class="account-email"></div>
+      <div class="group">
+        <button id="sign-out" class="row row-button destructive" type="button">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js"></script>
-  <script>
-    // The publishable key is meant to be public; row-level security in the database protects the data.
-    const SUPABASE_URL = 'https://uazlqmawtlzhatcktpcx.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_up4QXFYLTv-yf3YAofrD6g_UegJriFT';
-    const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Rapid taps are batched into one row, sent after this much idle time.
-    const BATCH_DELAY_MS = 1500;
-    const RETRY_DELAY_MS = 5000;
-    const MAX_ENTRY = 1000;
-
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const $ = (id) => document.getElementById(id);
-
-    let stats = null;
-    let pending = 0;   // taps not yet sent to the database
-    let inFlight = 0;  // amount currently being saved
-    let flushTimer = null;
-
-    // ---- Auth ----
-
-    $('sign-in-form').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const message = $('auth-message');
-      const button = event.submitter;
-      button.disabled = true;
-      message.className = '';
-      message.textContent = 'Sending…';
-
-      const { error } = await db.auth.signInWithOtp({
-        email: $('email').value.trim(),
-        options: { emailRedirectTo: window.location.origin + window.location.pathname },
-      });
-
-      button.disabled = false;
-      if (error) {
-        message.className = 'error';
-        message.textContent = error.message;
-      } else {
-        message.textContent = 'Check your email for a sign-in link.';
-      }
-    });
-
-    $('sign-out').addEventListener('click', async () => {
-      await flush();
-      await db.auth.signOut();
-    });
-
-    let currentUserId = null;
-    db.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null;
-      $('signed-out').hidden = !!user;
-      $('signed-in').hidden = !user;
-      if (!user) {
-        currentUserId = null;
-        stats = null;
-        return;
-      }
-      $('user-email').textContent = user.email ?? '';
-      if (user.id !== currentUserId) {
-        currentUserId = user.id;
-        // Defer: calling Supabase inside this callback can deadlock the auth client.
-        setTimeout(loadStats, 0);
-      }
-    });
-
-    // ---- Stats ----
-
-    async function loadStats() {
-      const { data, error } = await db.rpc('get_stats', { tz: TIME_ZONE });
-      if (error) {
-        setStatus('Could not load stats: ' + error.message, true);
-        return;
-      }
-      stats = data;
-      render();
-    }
-
-    // Unsaved taps are shown immediately on top of the last loaded totals.
-    function render() {
-      if (!stats) return;
-      const unsaved = pending + inFlight;
-      const today = stats.today + unsaved;
-      const week = stats.week + unsaved;
-      const month = stats.month + unsaved;
-
-      $('today-count').textContent = today;
-      $('decrement').disabled = today <= 0;
-
-      renderStat('today', today, stats.yesterday_to_date, 'vs yesterday at this time',
-        `Yesterday: ${stats.yesterday_total} · 30-day avg: ${stats.daily_avg_30d}/day`);
-      renderStat('week', week, stats.last_week_to_date, 'vs last week so far',
-        `Last week total: ${stats.last_week_total}`);
-      renderStat('month', month, stats.last_month_to_date, 'vs last month so far',
-        `Last month total: ${stats.last_month_total}`);
-    }
-
-    function renderStat(key, current, previous, label, detail) {
-      $('stat-' + key).textContent = current;
-      $('detail-' + key).textContent = detail;
-
-      const diff = current - previous;
-      const delta = $('delta-' + key);
-      if (diff === 0) {
-        delta.className = 'stat-delta flat';
-        delta.textContent = `— same ${label.replace(/^vs /, 'as ')}`;
-        return;
-      }
-      const arrow = diff > 0 ? '▲' : '▼';
-      const sign = diff > 0 ? '+' : '−';
-      const pct = previous > 0 ? `${Math.round(Math.abs(diff) / previous * 100)}%` : 'new';
-      delta.className = 'stat-delta ' + (diff > 0 ? 'up' : 'down');
-      delta.textContent = `${arrow} ${sign}${Math.abs(diff)} (${pct}) ${label}`;
-    }
-
-    // ---- Logging ----
-
-    function setStatus(text, isError = false) {
-      $('save-status').textContent = text;
-      $('save-status').className = isError ? 'error' : '';
-    }
-
-    function add(amount) {
-      if (!stats) return;
-      // Never let today's total go below zero.
-      const today = stats.today + pending + inFlight;
-      amount = Math.max(amount, -today);
-      if (amount === 0) return;
-
-      pending += amount;
-      render();
-      setStatus('Saving…');
-      clearTimeout(flushTimer);
-      flushTimer = setTimeout(flush, Math.abs(pending) >= MAX_ENTRY ? 0 : BATCH_DELAY_MS);
-    }
-
-    async function flush() {
-      clearTimeout(flushTimer);
-      if (pending === 0 || inFlight !== 0) return;
-
-      const amount = Math.max(-MAX_ENTRY, Math.min(MAX_ENTRY, pending));
-      pending -= amount;
-      inFlight = amount;
-
-      const { error } = await db.from('pushup_entries').insert({ count: amount });
-      inFlight = 0;
-
-      if (error) {
-        // Put it back and try again later, so taps aren't lost on a flaky connection.
-        pending += amount;
-        setStatus('Not saved yet — retrying…', true);
-        flushTimer = setTimeout(flush, RETRY_DELAY_MS);
-        return;
-      }
-
-      if (pending !== 0) {
-        flushTimer = setTimeout(flush, BATCH_DELAY_MS);
-        return;
-      }
-      setStatus('Saved');
-      await loadStats();
-    }
-
-    $('increment').addEventListener('click', () => add(1));
-    $('decrement').addEventListener('click', () => add(-1));
-
-    $('custom-form').addEventListener('submit', (event) => {
-      event.preventDefault();
-      const input = $('custom-amount');
-      const amount = Number(input.value);
-      if (!Number.isInteger(amount) || amount < 1 || amount > MAX_ENTRY) {
-        setStatus(`Enter a whole number from 1 to ${MAX_ENTRY}.`, true);
-        return;
-      }
-      input.value = '';
-      add(amount);
-      flush();
-    });
-
-    // Save before the tab is hidden; refresh totals when it comes back (e.g. the next day).
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        flush();
-      } else if (currentUserId && pending === 0 && inFlight === 0) {
-        loadStats();
-      }
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
