@@ -73,7 +73,8 @@ window.addEventListener('hashchange', route);
 
 const MIN_PASSWORD_LENGTH = 8;
 const REDIRECT_URL = window.location.origin + window.location.pathname;
-let authMode = 'signin';  // or 'signup'
+// 'link' (default: email a sign-in link), 'password', or 'signup'.
+let authMode = 'link';
 
 function setAuthMode(mode) {
   authMode = mode;
@@ -81,13 +82,20 @@ function setAuthMode(mode) {
   $('signin-subhead').textContent = signup
     ? 'Create an account with your email and a password.'
     : 'Track every set and see how today compares.';
-  $('signin-submit').textContent = signup ? 'Create Account' : 'Sign In';
-  $('mode-toggle').textContent = signup ? 'I Already Have an Account' : 'Create Account';
+  $('signin-submit').textContent = { link: 'Email Me a Sign-In Link', password: 'Sign In', signup: 'Create Account' }[mode];
+  $('password').hidden = mode === 'link';
   $('password').autocomplete = signup ? 'new-password' : 'current-password';
   $('password-hint').hidden = !signup;
-  $('magic-link').hidden = signup;
+  $('method-toggle').hidden = signup;
+  $('method-toggle').textContent = mode === 'link' ? 'Sign In With Password' : 'Email Me a Link Instead';
+  $('signup-toggle').replaceChildren(
+    signup ? 'Already have an account? ' : "Don't have an account? ",
+    h('span', 'action', signup ? 'Sign In' : 'Sign Up'),
+  );
   $('signin-error').textContent = '';
 }
+
+setAuthMode('link');
 
 function authErrorMessage(error) {
   switch (error.code) {
@@ -136,6 +144,14 @@ $('signin-form').addEventListener('submit', async (event) => {
   const email = validEmail();
   if (!email) return;
 
+  if (authMode === 'link') {
+    const { error: sendError } = await withBusy($('signin-submit'), 'Sending…',
+      () => db.auth.signInWithOtp({ email, options: { emailRedirectTo: REDIRECT_URL } }));
+    if (sendError) error.textContent = authErrorMessage(sendError);
+    else showEmailSent(email, 'link');
+    return;
+  }
+
   const password = $('password').value;
   if (!password) {
     error.textContent = 'Enter your password.';
@@ -148,7 +164,7 @@ $('signin-form').addEventListener('submit', async (event) => {
     return;
   }
 
-  if (authMode === 'signin') {
+  if (authMode === 'password') {
     const { error: signInError } = await withBusy($('signin-submit'), 'Signing In…',
       () => db.auth.signInWithPassword({ email, password }));
     if (signInError) error.textContent = authErrorMessage(signInError);
@@ -166,32 +182,27 @@ $('signin-form').addEventListener('submit', async (event) => {
   if (data.session) return;  // email confirmation is off; already signed in
   // With confirmation on, Supabase hides whether an address is taken by returning a user with no identities.
   if (data.user && data.user.identities?.length === 0) {
-    setAuthMode('signin');
+    setAuthMode('password');
     error.textContent = authErrorMessage({ code: 'user_already_exists' });
     return;
   }
   showEmailSent(email, 'confirm');
 });
 
-$('mode-toggle').addEventListener('click', () => {
-  setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
-  $('email').focus();
+$('method-toggle').addEventListener('click', () => {
+  setAuthMode(authMode === 'link' ? 'password' : 'link');
+  (authMode === 'password' && $('email').value ? $('password') : $('email')).focus();
 });
 
-$('magic-link').addEventListener('click', async () => {
-  $('signin-error').textContent = '';
-  const email = validEmail();
-  if (!email) return;
-  const { error } = await withBusy($('magic-link'), 'Sending…',
-    () => db.auth.signInWithOtp({ email, options: { emailRedirectTo: REDIRECT_URL } }));
-  if (error) $('signin-error').textContent = authErrorMessage(error);
-  else showEmailSent(email, 'link');
+$('signup-toggle').addEventListener('click', () => {
+  setAuthMode(authMode === 'signup' ? 'link' : 'signup');
+  $('email').focus();
 });
 
 $('signin-reset').addEventListener('click', () => {
   $('signin-sent-state').hidden = true;
   $('signin-form-state').hidden = false;
-  setAuthMode('signin');
+  setAuthMode('link');
   $('email').focus();
 });
 

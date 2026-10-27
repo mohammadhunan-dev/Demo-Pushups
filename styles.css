@@ -632,8 +632,19 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   font-size: 17px;
 }
 
-.signin .btn-plain { display: block; margin-left: auto; margin-right: auto; }
-.btn-plain + .btn-plain { margin-top: 0; }
+.signin .btn-plain,
+.signin .btn-text-small { display: block; margin-left: auto; margin-right: auto; }
+
+/* Secondary, footnote-sized link; only the action word is tinted. */
+.btn-text-small {
+  min-height: 44px;
+  margin-top: 20px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--label-2);
+}
+
+.btn-text-small .action { color: var(--tint); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) {
   .screen.entering, .screen.entering-back { animation: fade-in 0.2s linear; }
