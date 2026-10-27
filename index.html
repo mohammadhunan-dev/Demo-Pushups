@@ -2,118 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo Pushups</title>
-  <style>
-    :root {
-      --bg: #f5f5f7;
-      --card: #ffffff;
-      --text: #1d1d1f;
-      --muted: #6e6e73;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111113;
-        --card: #1c1c1f;
-        --text: #f5f5f7;
-        --muted: #a1a1a6;
-        --accent: #3b82f6;
-        --accent-hover: #60a5fa;
-      }
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 40px 32px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 320px;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    #count {
-      font-size: 5rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      margin: 8px 0 24px;
-    }
-
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    button {
-      width: 72px;
-      height: 72px;
-      border: none;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 2rem;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-    }
-
-    button:hover { background: var(--accent-hover); }
-    button:active { transform: scale(0.94); }
-    button:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 3px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pushups">
+  <title>Pushups</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="card">
-    <h1>Pushups</h1>
-    <div class="buttons">
-      <button id="increment" aria-label="Increment">&#8593;</button>
-      <div id="count" aria-live="polite">0</div>
-      <button id="decrement" aria-label="Decrement">&#8595;</button>
+  <!-- One stroke-icon family throughout (Lucide-style, 2px). -->
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+      </symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Sign in -->
+  <main id="view-signin" class="screen signin" hidden>
+    <div class="app-glyph" aria-hidden="true"><svg class="icon"><use href="#i-flame"/></svg></div>
+
+    <div id="signin-form-state">
+      <h1 class="large-title">Pushups</h1>
+      <p class="subhead">Track every set and see how today compares.</p>
+      <form id="signin-form" novalidate>
+        <input id="email" class="text-field" type="email" placeholder="Email" autocomplete="email" aria-label="Email" required>
+        <div id="signin-error" class="field-error" role="alert"></div>
+        <button id="signin-submit" class="btn-prominent" type="submit">Continue</button>
+      </form>
+    </div>
+
+    <div id="signin-sent-state" hidden>
+      <h1 class="large-title">Check Your Email</h1>
+      <p class="subhead">Tap the link sent to <strong id="sent-email"></strong> to sign in.</p>
+      <button id="signin-reset" class="btn-plain" type="button">Use a Different Email</button>
     </div>
   </main>
 
-  <script>
-    const countEl = document.getElementById('count');
-    let count = 0;
+  <!-- Summary -->
+  <main id="view-summary" class="screen" hidden>
+    <div class="large-title-bar">
+      <h1 class="large-title">Summary</h1>
+      <button id="avatar" class="avatar glass" type="button" aria-label="Account"></button>
+    </div>
 
-    function render() {
-      countEl.textContent = count;
-    }
+    <a href="#/pushups" class="card pressable" aria-label="Pushups today, show chart">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-flame"/></svg>
+        <span>Pushups</span>
+        <span class="meta"><span id="last-logged"></span><svg class="icon chevron"><use href="#i-chevron-right"/></svg></span>
+      </div>
+      <div class="big-value"><span id="today-count" class="rounded-num" aria-live="polite">0</span><span class="unit">reps</span></div>
+    </a>
 
-    document.getElementById('increment').addEventListener('click', () => {
-      count++;
-      render();
-    });
+    <h2 class="section-title">Highlights</h2>
+    <div id="highlights"></div>
+  </main>
 
-    document.getElementById('decrement').addEventListener('click', () => {
-      count--;
-      render();
-    });
-  </script>
+  <!-- Pushups detail -->
+  <main id="view-detail" class="screen" hidden>
+    <nav class="nav-bar">
+      <a href="#/" class="nav-button leading glass" aria-label="Back to Summary"><svg class="icon"><use href="#i-chevron-left"/></svg>Summary</a>
+      <span class="title">Pushups</span>
+      <button class="nav-button trailing glass" type="button" data-open-add>Add Data</button>
+    </nav>
+
+    <div class="segmented" role="group" aria-label="Time range">
+      <button type="button" data-period="D" aria-pressed="false">D</button>
+      <button type="button" data-period="W" aria-pressed="true">W</button>
+      <button type="button" data-period="M" aria-pressed="false">M</button>
+      <button type="button" data-period="Y" aria-pressed="false">Y</button>
+    </div>
+
+    <section class="card chart-card">
+      <div id="chart-caption" class="chart-caption">Daily Average</div>
+      <div class="chart-value"><span id="chart-value" class="rounded-num" aria-live="polite">0</span><span class="unit">reps</span></div>
+      <div id="chart-range" class="chart-range"></div>
+      <div id="chart" class="chart" role="img"></div>
+      <div class="pager">
+        <button id="page-prev" type="button" aria-label="Previous period"><svg class="icon"><use href="#i-chevron-left"/></svg>Earlier</button>
+        <button id="page-next" type="button" aria-label="Next period">Later<svg class="icon"><use href="#i-chevron-right"/></svg></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating controls (signed in only) -->
+  <div id="chrome" hidden>
+    <div class="scroll-edge top"></div>
+    <div class="scroll-edge bottom"></div>
+    <div id="save-status" class="save-status glass fade" role="status"></div>
+    <div class="toolbar glass">
+      <button id="decrement" class="circle" type="button" aria-label="Remove one pushup"><svg class="icon"><use href="#i-arrow-down"/></svg></button>
+      <button class="btn-prominent" type="button" data-open-add><svg class="icon"><use href="#i-plus"/></svg>Add</button>
+      <button id="increment" class="circle" type="button" aria-label="Add one pushup"><svg class="icon"><use href="#i-arrow-up"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Add Data sheet -->
+  <div id="sheet-add" hidden>
+    <div class="scrim" data-close-sheet></div>
+    <form id="add-form" class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" novalidate>
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-bar">
+        <button class="leading" type="button" data-close-sheet>Cancel</button>
+        <span id="add-title" class="title">Pushups</span>
+        <button class="trailing" type="submit">Add</button>
+      </div>
+      <div class="group">
+        <label class="row">
+          <span>Reps</span>
+          <input id="add-amount" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="0">
+        </label>
+      </div>
+      <div id="add-error" class="row-note" role="alert">Logged at the current time.</div>
+    </form>
+  </div>
+
+  <!-- Account sheet -->
+  <div id="sheet-account" hidden>
+    <div class="scrim" data-close-sheet></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="account-title">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-bar">
+        <span></span>
+        <span id="account-title" class="title">Account</span>
+        <button class="trailing" type="button" data-close-sheet>Done</button>
+      </div>
+      <div id="account-email" class="account-email"></div>
+      <div class="group">
+        <button id="sign-out" class="row row-button destructive" type="button">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
