@@ -590,6 +590,42 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   color: var(--label-2);
 }
 
+/* Neutral surface so the single orange button stays the only tinted primary. */
+.btn-social {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--bg-cell);
+  color: var(--label);
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 0.5px var(--separator);
+}
+
+.btn-social .google-logo { width: 20px; height: 20px; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--label-2);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 0.5px;
+  background: var(--separator);
+}
+
 /* Inset grouped fields, like Settings: one rounded group, hairline between rows. */
 .field-group {
   background: var(--bg-cell);

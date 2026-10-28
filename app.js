@@ -8,6 +8,17 @@ const BATCH_DELAY_MS = 1500;
 const RETRY_DELAY_MS = 5000;
 const MAX_ENTRY = 1000;
 
+// A failed or canceled Google sign-in comes back with the error in the URL. Read it before
+// supabase-js consumes the URL, then show it on the sign-in screen.
+const redirectError = (() => {
+  const params = new URLSearchParams(window.location.hash.slice(1) || window.location.search);
+  if (!params.has('error')) return null;
+  history.replaceState(null, '', window.location.pathname);
+  return params.get('error') === 'access_denied'
+    ? 'Sign-in was canceled.'
+    : (params.get('error_description') || 'Sign-in failed. Try again.').replace(/\+/g, ' ');
+})();
+
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n).toLocaleString();
@@ -96,6 +107,35 @@ function setAuthMode(mode) {
 }
 
 setAuthMode('link');
+if (redirectError) $('signin-error').textContent = redirectError;
+
+// Only offer Google once the provider is enabled in Supabase; otherwise the button would
+// lead to a raw error page.
+(async () => {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } });
+    const settings = response.ok ? await response.json() : {};
+    const enabled = settings.external?.google === true;
+    $('google-signin').hidden = !enabled;
+    $('auth-divider').hidden = !enabled;
+  } catch {
+    // Leave Google hidden; the email options still work.
+  }
+})();
+
+$('google-signin').addEventListener('click', async () => {
+  $('signin-error').textContent = '';
+  $('google-signin').disabled = true;
+  const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: REDIRECT_URL } });
+  // On success the page navigates to Google, so this only runs if it couldn't start.
+  if (error) {
+    $('google-signin').disabled = false;
+    $('signin-error').textContent = authErrorMessage(error);
+  }
+});
+
+// Coming back from Google via the Back button can restore this page with the button still disabled.
+window.addEventListener('pageshow', () => { $('google-signin').disabled = false; });
 
 function authErrorMessage(error) {
   switch (error.code) {
