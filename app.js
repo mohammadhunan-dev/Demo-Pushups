@@ -54,31 +54,70 @@ function icon(name, className = 'icon') {
   return node;
 }
 
-// ---- Routing ----
+// ---- Screens ----
 
 let currentView = null;
 
-function route() {
-  const view = !currentUser ? 'signin' : location.hash === '#/pushups' ? 'detail' : 'summary';
+function showScreen() {
+  const view = currentUser ? 'summary' : 'signin';
   if (view === currentView) return;
-  const previous = currentView;
   currentView = view;
-
-  for (const name of ['signin', 'summary', 'detail']) $('view-' + name).hidden = name !== view;
+  $('view-signin').hidden = view !== 'signin';
+  $('view-summary').hidden = view !== 'summary';
   $('chrome').hidden = view === 'signin';
-
-  // Push slides in from the right; going back slides the other way.
-  const screen = $('view-' + view);
-  screen.classList.remove('entering', 'entering-back');
-  if (previous && previous !== 'signin' && view !== 'signin') {
-    void screen.offsetWidth;
-    screen.classList.add(view === 'detail' ? 'entering' : 'entering-back');
-  }
   window.scrollTo(0, 0);
-  if (view === 'detail') loadHistory();
+  if (view === 'summary' && isPinned('chart') && chart.rows) renderChart();
 }
 
-window.addEventListener('hashchange', route);
+// ---- Pinned preferences ----
+// Stored in the user's Supabase metadata so pins follow them across devices.
+
+const PIN_ITEMS = {
+  chart: { label: 'Pushups Chart', detail: 'Day, week, month and year bars' },
+  today: { label: 'Today', detail: 'Total compared with yesterday' },
+  week: { label: 'This Week', detail: 'Total compared with last week' },
+  month: { label: 'This Month', detail: 'Total compared with last month' },
+  average: { label: '30-Day Average', detail: 'Pushups per day' },
+};
+const PIN_KEYS = Object.keys(PIN_ITEMS);
+const PERIODS = ['D', 'W', 'M', 'Y'];
+
+let prefs = readPrefs(null);
+let prefsTimer = null;
+
+// Fills in anything missing or unknown, so older or hand-edited metadata can't break the page.
+function readPrefs(user) {
+  const saved = user?.user_metadata?.pushups_prefs ?? {};
+  const savedOrder = Array.isArray(saved.order) ? saved.order.filter((key) => PIN_KEYS.includes(key)) : [];
+  return {
+    order: [...new Set([...savedOrder, ...PIN_KEYS])],
+    pinned: Array.isArray(saved.pinned) ? saved.pinned.filter((key) => PIN_KEYS.includes(key)) : ['chart', 'today'],
+    chartPeriod: PERIODS.includes(saved.chartPeriod) ? saved.chartPeriod : 'W',
+  };
+}
+
+const isPinned = (key) => prefs.pinned.includes(key);
+
+function savePrefs() {
+  clearTimeout(prefsTimer);
+  prefsTimer = setTimeout(savePrefsNow, 800);
+}
+
+async function savePrefsNow() {
+  clearTimeout(prefsTimer);
+  prefsTimer = null;
+  const { error } = await db.auth.updateUser({ data: { pushups_prefs: prefs } });
+  if (error) setStatus('Unable to save pinned items.', 'error');
+}
+
+function renderPinned() {
+  prefs.order.forEach((key, index) => {
+    const item = $('pin-' + key);
+    item.hidden = !isPinned(key);
+    item.style.order = index;
+  });
+  $('pinned-empty').hidden = prefs.pinned.length > 0;
+}
 
 // ---- Auth ----
 
@@ -249,6 +288,7 @@ $('signin-reset').addEventListener('click', () => {
 $('sign-out').addEventListener('click', async () => {
   closeSheet(true);
   await flush();
+  if (prefsTimer) await savePrefsNow();
   await db.auth.signOut();
   history.replaceState(null, '', window.location.pathname);
 });
@@ -267,10 +307,23 @@ db.auth.onAuthStateChange((_event, session) => {
     closeSheet(true);
   }
 
+  // Only take prefs from the account on sign-in; later USER_UPDATED events echo our own saves.
+  if (changed) {
+    prefs = readPrefs(user);
+    chart.period = prefs.chartPeriod;
+    chart.offset = 0;
+    chart.rows = null;
+    setHighlightsExpanded(false);
+    renderPinned();
+  }
+
   // Defer: calling Supabase inside this callback can deadlock the auth client.
   setTimeout(() => {
-    route();
-    if (user && changed) loadStats();
+    showScreen();
+    if (user && changed) {
+      loadStats();
+      if (isPinned('chart')) loadHistory();
+    }
   }, 0);
 });
 
@@ -297,9 +350,15 @@ function render() {
   const unsaved = pending + inFlight;
   const today = stats.today + unsaved;
 
-  $('today-count').textContent = fmt(today);
+  const week = stats.week + unsaved;
+  const month = stats.month + unsaved;
+
   $('decrement').disabled = today <= 0;
   $('last-logged').textContent = unsaved !== 0 ? 'Now' : lastLoggedLabel();
+  renderTile('today', today, stats.yesterday_to_date, 'yesterday');
+  renderTile('week', week, stats.last_week_to_date, 'last week');
+  renderTile('month', month, stats.last_month_to_date, 'last month');
+  $('average-count').textContent = fmt(stats.daily_avg_30d);
 
   $('highlights').replaceChildren(
     highlightCard({
@@ -309,19 +368,124 @@ function render() {
       footnote: `30-day average: ${fmt(stats.daily_avg_30d)} a day`,
     }),
     highlightCard({
-      current: stats.week + unsaved, previous: stats.last_week_to_date,
+      current: week, previous: stats.last_week_to_date,
       nowLabel: 'This Week', thenLabel: 'Last Week',
       period: 'this week', comparedTo: 'at this point last week',
       footnote: `Last week: ${fmt(stats.last_week_total)} total`,
     }),
     highlightCard({
-      current: stats.month + unsaved, previous: stats.last_month_to_date,
+      current: month, previous: stats.last_month_to_date,
       nowLabel: 'This Month', thenLabel: 'Last Month',
       period: 'this month', comparedTo: 'at this point last month',
       footnote: `Last month: ${fmt(stats.last_month_total)} total`,
     }),
   );
 }
+
+function renderTile(key, current, previous, comparedTo) {
+  $(key + '-count').textContent = fmt(current);
+  const delta = deltaText(current, previous);
+  $(key + '-delta').replaceChildren(h('span', 'delta ' + delta.kind, delta.text.replace(/ \(.*\)$/, '')), ` vs ${comparedTo}`);
+}
+
+// ---- Highlights (collapsed by default) ----
+
+function setHighlightsExpanded(expanded) {
+  $('highlights-toggle').setAttribute('aria-expanded', String(expanded));
+  $('highlights').hidden = !expanded;
+}
+
+$('highlights-toggle').addEventListener('click', () => {
+  setHighlightsExpanded($('highlights-toggle').getAttribute('aria-expanded') !== 'true');
+});
+
+// ---- Edit Pinned ----
+
+function buildPinList() {
+  $('pin-list').replaceChildren(...prefs.order.map((key) => {
+    const { label, detail } = PIN_ITEMS[key];
+    const star = h('button', 'pin-star', icon('star', ''));
+    star.type = 'button';
+    star.setAttribute('aria-pressed', String(isPinned(key)));
+    star.setAttribute('aria-label', `Pin ${label}`);
+
+    const handle = h('button', 'pin-handle', icon('grip', ''));
+    handle.type = 'button';
+    handle.setAttribute('aria-label', `Reorder ${label}. Use the up and down arrow keys.`);
+
+    const row = h('div', 'row pin-row', star, h('span', 'pin-label', label, h('small', '', detail)), handle);
+    row.dataset.key = key;
+    return row;
+  }));
+}
+
+function commitPinOrder() {
+  prefs.order = [...$('pin-list').children].map((row) => row.dataset.key);
+  renderPinned();
+  savePrefs();
+}
+
+$('edit-pinned').addEventListener('click', () => {
+  buildPinList();
+  openSheet('sheet-pinned');
+});
+
+$('pin-list').addEventListener('click', (event) => {
+  const star = event.target.closest('.pin-star');
+  if (!star) return;
+  const key = star.closest('.pin-row').dataset.key;
+  prefs.pinned = isPinned(key) ? prefs.pinned.filter((k) => k !== key) : [...prefs.pinned, key];
+  star.setAttribute('aria-pressed', String(isPinned(key)));
+  renderPinned();
+  savePrefs();
+  // A chart drawn while hidden has no width to measure, so redraw it once it's visible.
+  if (key === 'chart' && isPinned('chart')) chart.rows ? renderChart() : loadHistory();
+});
+
+// Drag the handle to reorder: the row moves live as the pointer passes other rows' midpoints.
+let draggingRow = null;
+
+$('pin-list').addEventListener('pointerdown', (event) => {
+  const handle = event.target.closest('.pin-handle');
+  if (!handle) return;
+  event.preventDefault();
+  handle.setPointerCapture(event.pointerId);
+  draggingRow = handle.closest('.pin-row');
+  draggingRow.classList.add('dragging');
+});
+
+$('pin-list').addEventListener('pointermove', (event) => {
+  if (!draggingRow) return;
+  const list = $('pin-list');
+  const before = [...list.children].find((row) => {
+    if (row === draggingRow) return false;
+    const rect = row.getBoundingClientRect();
+    return event.clientY < rect.top + rect.height / 2;
+  });
+  if (before !== draggingRow.nextElementSibling) list.insertBefore(draggingRow, before ?? null);
+});
+
+function endDrag() {
+  if (!draggingRow) return;
+  draggingRow.classList.remove('dragging');
+  draggingRow = null;
+  commitPinOrder();
+}
+
+$('pin-list').addEventListener('pointerup', endDrag);
+$('pin-list').addEventListener('pointercancel', endDrag);
+
+$('pin-list').addEventListener('keydown', (event) => {
+  const handle = event.target.closest('.pin-handle');
+  if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+  event.preventDefault();
+  const row = handle.closest('.pin-row');
+  if (event.key === 'ArrowUp' && row.previousElementSibling) row.after(row.previousElementSibling);
+  else if (event.key === 'ArrowDown' && row.nextElementSibling) row.before(row.nextElementSibling);
+  else return;
+  handle.focus();
+  commitPinOrder();
+});
 
 function lastLoggedLabel() {
   if (!lastLoggedAt) return '';
@@ -420,7 +584,7 @@ async function flush() {
   }
   setStatus('Saved', 'done');
   await loadStats();
-  if (currentView === 'detail') loadHistory();
+  if (isPinned('chart')) loadHistory();
 }
 
 $('increment').addEventListener('click', () => add(1));
@@ -500,6 +664,8 @@ periodButtons.forEach((button) => button.addEventListener('click', () => {
   chart.period = button.dataset.period;
   chart.offset = 0;
   loadHistory();
+  prefs.chartPeriod = chart.period;
+  savePrefs();
 }));
 
 $('page-prev').addEventListener('click', () => {
@@ -679,7 +845,7 @@ function renderChart() {
 }
 
 window.addEventListener('resize', () => {
-  if (currentView === 'detail') renderChart();
+  if (isPinned('chart')) renderChart();
 });
 
 // Save before the tab is hidden; refresh totals when it comes back (e.g. the next day).
@@ -688,6 +854,6 @@ document.addEventListener('visibilitychange', () => {
     flush();
   } else if (currentUser && pending === 0 && inFlight === 0) {
     loadStats();
-    if (currentView === 'detail') loadHistory();
+    if (isPinned('chart')) loadHistory();
   }
 });
