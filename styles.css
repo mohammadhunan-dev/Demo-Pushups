@@ -89,12 +89,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   padding: calc(env(safe-area-inset-top) + 12px) var(--margin) calc(env(safe-area-inset-bottom) + 140px);
 }
 
-.screen.entering { animation: push-in 0.4s var(--ease-apple); }
-.screen.entering-back { animation: pop-in 0.4s var(--ease-apple); }
-
-@keyframes push-in { from { transform: translateX(30%); opacity: 0; } }
-@keyframes pop-in { from { transform: translateX(-12%); opacity: 0; } }
-
 .large-title-bar {
   display: flex;
   align-items: center;
@@ -338,36 +332,108 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .save-status.error { color: var(--red); }
 .save-status.fade { opacity: 0; }
 
-/* ---------- Detail view ---------- */
+/* ---------- Pinned ---------- */
 
-.nav-bar {
-  position: sticky;
-  top: calc(env(safe-area-inset-top) + 8px);
-  z-index: 10;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 }
 
-.nav-bar .title { font-weight: 600; text-align: center; }
-
-.nav-button {
+.section-action {
   min-height: 44px;
-  padding: 0 16px 0 10px;
-  border-radius: 999px;
+  padding: 0 4px;
+  color: var(--tint);
+  font-size: 17px;
+}
+
+.pinned {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pinned > .card { margin: 0; }
+.pin-wide { grid-column: 1 / -1; }
+
+.pin-tile .card-head { font-size: 13px; line-height: 18px; }
+
+.tile-value {
+  margin-top: 8px;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+}
+
+.tile-value .unit {
+  margin-left: 3px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-2);
+}
+
+.tile-delta {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--label-2);
+}
+
+.tile-delta .delta { font-weight: 600; }
+
+.empty-note {
+  margin: 0;
+  padding: 24px 16px;
+  border-radius: 14px;
+  background: var(--bg-cell);
+  text-align: center;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--label-2);
+}
+
+/* Collapsible section heading; the chevron turns down when open. */
+.disclosure {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  color: var(--label);
-  text-decoration: none;
-  white-space: nowrap;
+  gap: 6px;
+  min-height: 44px;
+  font: inherit;
 }
 
-.nav-button.trailing { justify-self: end; padding: 0 16px; color: var(--tint); font-weight: 600; }
-.nav-button.leading { justify-self: start; }
-.nav-button .icon { width: 22px; height: 22px; }
+.disclosure .chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--label-3);
+  transition: transform 0.25s var(--ease-apple);
+}
+
+.disclosure[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+
+.pin-row { gap: 12px; padding-top: 6px; padding-bottom: 6px; }
+.pin-row + .pin-row { border-top: 0.5px solid var(--separator); }
+.pin-row.dragging { background: var(--fill); }
+
+.pin-star,
+.pin-handle {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.pin-star { margin-left: -10px; color: var(--label-3); }
+.pin-star svg { width: 22px; height: 22px; fill: none; }
+.pin-star[aria-pressed="true"] { color: var(--tint); }
+.pin-star[aria-pressed="true"] svg { fill: currentColor; }
+
+.pin-label { flex: 1; min-width: 0; }
+.pin-label small { display: block; font-size: 13px; line-height: 18px; color: var(--label-2); }
+
+.pin-handle { margin-right: -10px; color: var(--label-3); cursor: grab; touch-action: none; }
+.pin-handle svg { width: 22px; height: 22px; }
 
 .segmented {
   display: grid;
@@ -389,7 +455,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
 }
 
-.chart-card { margin-top: 16px; padding-bottom: 12px; }
+.chart-card { padding-bottom: 12px; }
+.chart-card .segmented { margin: 12px 0 14px; }
 
 .chart-caption {
   font-size: 13px;
@@ -683,9 +750,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .btn-text-small .action { color: var(--tint); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen.entering, .screen.entering-back { animation: fade-in 0.2s linear; }
   .sheet { animation: fade-in 0.2s linear; }
   .sheet.closing, .scrim.closing { animation: fade-out 0.15s linear forwards; }
   button:active:not(:disabled), .pressable:active { transform: none; }
-  .compare-bar .fill { transition: none; }
+  .compare-bar .fill, .disclosure .chevron { transition: none; }
 }
